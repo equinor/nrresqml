@@ -58,7 +58,7 @@ class _Cacher:
     def dump_content_types(self, ct: contenttypes.Types):
         el = elementify.elementify(ct, [], None)
         tree = etree.ElementTree(el)
-        fh = self._handle('[ContentTypes].xml')
+        fh = self._handle('[Content_Types].xml')
         tree.write(fh, pretty_print=True, standalone=False, encoding='utf-8')
 
     def dump_dot_rels(self):
