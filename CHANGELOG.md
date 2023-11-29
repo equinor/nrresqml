@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/equinor/nrresqml/compare/v1.0.1...v1.0.2) (2023-11-29)
+
+
+### Bug Fixes
+
+* long_name could be string or bytes ([cca558a](https://github.com/equinor/nrresqml/commit/cca558abec49df30196e4239a35be2e6b84580a9))
+
 ## [1.0.1](https://github.com/equinor/nrresqml/compare/v1.0.0...v1.0.1) (2023-09-05)
 
 
