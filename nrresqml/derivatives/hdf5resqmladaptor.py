@@ -122,7 +122,10 @@ class Delft3DResQmlAdaptor(Hdf5ResQmlAdaptor):
         for p in self._continuous_properties:
             # Workaround to support both HDF5 and pydap when finding 'long_name':
             try:
-                long_name = p.attrs['long_name'].decode('utf-8')
+                long_name = p.attrs['long_name']
+                # sometimes models returns bytes, so we need to decode it
+                if isinstance(long_name, bytes):
+                   long_name= long_name.decode('utf-8')
             except AttributeError:
                 long_name = p.attributes['long_name']
             pn = p.name.strip('/')
