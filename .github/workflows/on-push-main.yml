@@ -21,5 +21,5 @@ jobs:
     steps:
       - uses: google-github-actions/release-please-action@v4
         with:
-          release-type: python
+          release-type: simple
           token: ${{ secrets.GITHUB_TOKEN }}
