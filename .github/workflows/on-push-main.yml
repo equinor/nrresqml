@@ -5,6 +5,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
+
+  
 # defaults:
 #   run:
 #     working-directory: src
@@ -15,8 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: google-github-actions/release-please-action@v3
+      - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          command: manifest
-          package-name: release-please-action
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
