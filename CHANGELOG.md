@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/equinor/nrresqml/compare/v1.0.2...v1.0.3) (2024-01-15)
+
+
+### Bug Fixes
+
+* updated project type ([cbb5dbe](https://github.com/equinor/nrresqml/commit/cbb5dbe0125e6e6d1f2f84802699858124b7c223))
+
 ## [1.0.2](https://github.com/equinor/nrresqml/compare/v1.0.1...v1.0.2) (2023-11-29)
 
 
