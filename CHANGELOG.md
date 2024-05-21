@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.4](https://github.com/equinor/nrresqml/compare/v1.0.3...v1.0.4) (2024-05-21)
+
+
+### Bug Fixes
+
+* always monotonize z-coordinates when creating an ijk grid ([601e6f7](https://github.com/equinor/nrresqml/commit/601e6f79adbb5c7eb9d3285e0c424bef0fe4893e))
+* new resqml-to-rms import script ([cd01957](https://github.com/equinor/nrresqml/commit/cd01957d93c8a228ac8c8b42f8ac5caf41797779))
+* Updating NetCDF-to-Resqml conversion and Resqml-to-RMS import to be compatible with new Delft3D models ([e4bf893](https://github.com/equinor/nrresqml/commit/e4bf89386c9370829a2c71255bf05f94bb872a65))
+
 ## [1.0.3](https://github.com/equinor/nrresqml/compare/v1.0.2...v1.0.3) (2024-01-15)
 
 
