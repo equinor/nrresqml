@@ -7,9 +7,17 @@ from nrresqml.factories.resqml.common import create_meta_data
 from nrresqml.factories.resqml.representations import create_local_depth_3d_crs
 from nrresqml.structures import xsd
 from nrresqml.structures.energetics import EpcExternalPartReference, Hdf5Dataset
-from nrresqml.structures.resqml.geometry import DoubleHdf5Array, Point3dHdf5Array, ParametricLineArray,\
-    Point3dParametricArray
-from nrresqml.structures.resqml.representations import IjkGridRepresentation, IjkGridGeometry, KDirection
+from nrresqml.structures.resqml.geometry import (
+    DoubleHdf5Array,
+    Point3dHdf5Array,
+    ParametricLineArray,
+    Point3dParametricArray,
+)
+from nrresqml.structures.resqml.representations import (
+    IjkGridRepresentation,
+    IjkGridGeometry,
+    KDirection,
+)
 
 
 class IjkGridCreationError(Exception):
@@ -31,22 +39,25 @@ class _GridParameters:
 def _extract_grid_parameters(_d3_file: h5py.File) -> _GridParameters:
     # Check that the file contains the expected parameters
     _keys = set(_d3_file.keys())
-    if not {'XCOR', 'xcor'}.intersection(_keys):
+    if not {"XCOR", "xcor"}.intersection(_keys):
         raise IjkGridCreationError('Missing at least parameter "XCOR" or "xcor"')
-    if not {'YCOR', 'ycor'}.intersection(_keys):
+    if not {"YCOR", "ycor"}.intersection(_keys):
         raise IjkGridCreationError('Missing at least parameter "YCOR" or "ycor"')
-    if not {'DPS', 'zcor'}.intersection(_keys):
+    if not {"DPS", "zcor"}.intersection(_keys):
         raise IjkGridCreationError('Missing at least parameter "DPS" or "zcor"')
     # Extract parameters
-    xcor = _d3_file['xcor'] if 'xcor' in _keys else _d3_file['XCOR']
-    ycor = _d3_file['ycor'] if 'ycor' in _keys else _d3_file['YCOR']
-    zcor = _d3_file['zcor'] if 'zcor' in _keys else _d3_file['DPS']
+    xcor = _d3_file["xcor"] if "xcor" in _keys else _d3_file["XCOR"]
+    ycor = _d3_file["ycor"] if "ycor" in _keys else _d3_file["YCOR"]
+    zcor = _d3_file["zcor"] if "zcor" in _keys else _d3_file["DPS"]
     nk, ni, nj = zcor.shape
     dx = (np.max(xcor) - np.min(xcor)) / (ni - 1)
     dy = (np.max(ycor) - np.min(ycor)) / (nj - 1)
     zz = np.array(zcor)
-    if 'zcor' not in _d3_file:
-        # DPS was used, which is a temporal layer and may not be spatially feasible
+    if "zcor" in _d3_file:
+        # zcor increases upwards, mono_elevation expects downwards-increasing depth
+        zz = IjkGridCreator.mono_elevation(-zz)
+    if "zcor" not in _d3_file:
+        # DPS is depth
         zz = IjkGridCreator.mono_elevation(zz)
     return _GridParameters(ni, nj, nk, dx, dy, zz, xcor[0, 0], ycor[0, 0])
 
@@ -74,11 +85,11 @@ class IjkGridCreator:
 
     @property
     def _control_points_path(self):
-        return f'control_points_{id(self._control_points)}'
+        return f"control_points_{id(self._control_points)}"
 
     @property
     def _control_point_parameters_path(self):
-        return f'control_point_parameters_{id(self._control_point_parameters)}'
+        return f"control_point_parameters_{id(self._control_point_parameters)}"
 
     @property
     def pillars(self) -> np.ndarray:
@@ -90,7 +101,9 @@ class IjkGridCreator:
         # With the current implementation, the pillars exactly match the control point parameters.
         return self._control_point_parameters
 
-    def ijk_representation(self, h5_epc_ref: EpcExternalPartReference) -> IjkGridRepresentation:
+    def ijk_representation(
+        self, h5_epc_ref: EpcExternalPartReference
+    ) -> IjkGridRepresentation:
         """
         Creates and returns the IjkGridRepresentation for the input data file
 
@@ -101,30 +114,35 @@ class IjkGridCreator:
         """
         # Create geometry
         crs = create_local_depth_3d_crs()
-        plane = Point3dHdf5Array(Hdf5Dataset(xsd.string(self._control_points_path), h5_epc_ref))
-        lines = ParametricLineArray(
-            _hdf5_array(h5_epc_ref, self._control_point_parameters_path),
-            plane
+        plane = Point3dHdf5Array(
+            Hdf5Dataset(xsd.string(self._control_points_path), h5_epc_ref)
         )
-        points = Point3dParametricArray(_hdf5_array(h5_epc_ref, self._control_points_path), lines)
+        lines = ParametricLineArray(
+            _hdf5_array(h5_epc_ref, self._control_point_parameters_path), plane
+        )
+        points = Point3dParametricArray(
+            _hdf5_array(h5_epc_ref, self._control_points_path), lines
+        )
         geom = IjkGridGeometry(crs, points, KDirection.up, xsd.boolean(True))
         # Create representation
-        meta = create_meta_data('Delft 3D-based grid')
+        meta = create_meta_data("Delft 3D-based grid")
         rep = IjkGridRepresentation(
             **meta,
             Geometry=geom,
             Nk=xsd.positiveInteger(self._control_point_parameters.shape[3]),
             Ni=xsd.positiveInteger(self._control_point_parameters.shape[1]),
-            Nj=xsd.positiveInteger(self._control_point_parameters.shape[2])
+            Nj=xsd.positiveInteger(self._control_point_parameters.shape[2]),
         )
         return rep
 
     def dump_grid_data(self, h5_file: h5py.File):
         h5_file.create_dataset(
-            self._control_points_path, data=self._control_points, compression='gzip'
+            self._control_points_path, data=self._control_points, compression="gzip"
         )
         h5_file.create_dataset(
-            self._control_point_parameters_path, data=self._control_point_parameters, compression='gzip'
+            self._control_point_parameters_path,
+            data=self._control_point_parameters,
+            compression="gzip",
         )
 
     @staticmethod
@@ -138,13 +156,17 @@ class IjkGridCreator:
         """
         base_depth = depth[0, :, :]
         relative_elevation = depth - base_depth
-        truncated_elevation = np.maximum.accumulate(relative_elevation[::-1, :, :], axis=0)[::-1]
+        truncated_elevation = np.maximum.accumulate(
+            relative_elevation[::-1, :, :], axis=0
+        )[::-1]
         return -truncated_elevation
 
     @staticmethod
     def pillarized_control_points(gp: _GridParameters):
-        cp = np.ndarray((4, gp.nx, gp.ny, 3), dtype=np.float)
-        xx, yy = np.meshgrid(np.arange(gp.nx + 1) * gp.dx, np.arange(gp.ny + 1) * gp.dy, indexing='ij')
+        cp = np.ndarray((4, gp.nx, gp.ny, 3), dtype=np.float64)
+        xx, yy = np.meshgrid(
+            np.arange(gp.nx + 1) * gp.dx, np.arange(gp.ny + 1) * gp.dy, indexing="ij"
+        )
         # Control points. Describes the lateral distribution of pillars
         cp[0, :, :, 0] = xx[:-1, :-1]
         cp[1, :, :, 0] = xx[1:, :-1]
