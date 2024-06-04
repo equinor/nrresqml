@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.5](https://github.com/equinor/nrresqml/compare/v1.0.4...v1.0.5) (2024-06-04)
+
+
+### Bug Fixes
+
+* bumped python package version ([ce0a187](https://github.com/equinor/nrresqml/commit/ce0a187496c73932b54d858fc2782f80f1f85f9b))
+
 ## [1.0.4](https://github.com/equinor/nrresqml/compare/v1.0.3...v1.0.4) (2024-05-21)
 
 
