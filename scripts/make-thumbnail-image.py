@@ -1,9 +1,19 @@
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
+import pathlib
+import tqdm
 
-resqml_file = r"C:\\Projects\\d3dmod\\check-resqml\\resqml-files\\sobrarbe.epc"
 
+def is_foreground(array, background_values):
+    return np.logical_and.reduce([array != bgv for bgv in background_values])
+
+
+resqml_file = r"C:\\Projects\\D3D\\roda-resqml\\roda.epc"
+# resqml_file = r"C:\\Projects\\D3D\\sobrarbe-resqml\\sobrarbe.epc"
+
+
+print(f"Reading {resqml_file}...")
 data = h5py.File(resqml_file.replace(".epc", ".h5"), mode="r")
 cps_key = [c for c in data.keys() if c.startswith("control_points")][0]
 cpp_key = [c for c in data.keys() if c.startswith("control_point_parameters")][0]
@@ -33,7 +43,85 @@ dy = cps[0, 1, 1] - cps[0, 0, 1]
 archel_name = "archel"
 archel = data[archel_name]
 
+# Count occurrences of archel values
+archel_values = np.unique(archel)
+archel_counts = np.zeros_like(archel_values)
+for i, v in tqdm.tqdm(
+    enumerate(archel_values),
+    total=archel_values.size,
+    desc="Calculating archel statistics",
+    unit="archel value",
+):
+    archel_counts[i] = np.sum(archel == v)
 
-plt.figure()
-plt.pcolormesh(archel[-1, :, :])
-plt.show()
+sum_of_counts = np.sum(archel_counts)
+assert sum_of_counts == archel.size
+
+print("Archel value frequencies:")
+for v, c in zip(archel_values, archel_counts):
+    print(f"  {v}: {c} ({c/sum_of_counts:.1%})")
+
+xmesh, ymesh = np.meshgrid(
+    np.linspace(x0, x0 + dx * nx, archel.shape[1]),
+    np.linspace(y0, y0 + dy * ny, archel.shape[2]),
+    indexing="ij",
+)
+background_archel_values = [0, 6]
+x_foreground = np.where(
+    is_foreground(archel[-1, :, :], background_archel_values), xmesh, np.nan
+)
+y_foreground = np.where(
+    np.all(archel[-1, :, :] != bgv for bgv in background_archel_values), ymesh, np.nan
+)
+x_centroid = np.nanmean(x_foreground.flatten())
+y_centroid = np.nanmean(y_foreground.flatten())
+
+x_min = np.nanmin(x_foreground)
+x_max = np.nanmax(x_foreground)
+y_min = np.nanmin(y_foreground)
+y_max = np.nanmax(y_foreground)
+
+
+print("Creating thumbnail image...")
+if True:
+    plt.figure()
+    plt.imshow(
+        np.where(
+            is_foreground(archel[-1, :, :], background_archel_values),
+            archel[-1, :, :],
+            np.nan,
+        ),
+        extent=(y0, y0 + dy * ny, x0, x0 + dx * nx),
+        interpolation="none",
+        origin="lower",
+        cmap="tab10",
+    )
+
+    if False:
+        plt.scatter(y_centroid, x_centroid, color="white", s=100, marker="o")
+        plt.scatter(y_centroid, x_centroid, color="black", s=100, marker="+")
+
+    plt.axis("off")
+
+    # Set axis limits
+    plt.xlim = (y_min, y_max)
+    plt.ylim = (x_min, x_max)
+
+    # Set aspect ratio
+    plt.gca().set_aspect("equal", adjustable="box")
+
+    plt.tight_layout()
+
+    if False:
+        plt.show()
+    else:
+        input_path = pathlib.Path(resqml_file)
+        input_filename = input_path.stem
+        output_filename = f"{input_filename}-thumbnail.png"
+        output_path = input_path.parent / output_filename
+
+        fig = plt.gcf()
+        fig.set_size_inches(1.5, 1.5)
+
+        plt.savefig(output_path, dpi=300)
+        print(f"Saved thumbnail image to {output_path}")
