@@ -44,6 +44,8 @@ def _read_resqml(fn: pathlib.Path) -> dict:
     archel_name = "archel"
     archel = data[archel_name]
 
+    cell_volumes = _compute_cell_volumes(cpp_full, dx, dy)
+
     return {
         "x0": x0,
         "y0": y0,
@@ -53,6 +55,7 @@ def _read_resqml(fn: pathlib.Path) -> dict:
         "ny": ny,
         "nz": nz,
         "archel": archel,
+        "cell_volumes": cell_volumes,
         "model_name": fn.stem,
     }
 
@@ -61,6 +64,9 @@ def _compute_archel_stats(resqml_data: dict) -> dict:
     archel = resqml_data["archel"]
     archel_values = np.unique(archel)
     archel_counts = np.zeros_like(archel_values)
+    cell_volumes = resqml_data["cell_volumes"]
+    total_volume = np.sum(cell_volumes)
+    archel_volumes = np.zeros_like(archel_values)
     for i, v in tqdm.tqdm(
         enumerate(archel_values),
         total=archel_values.size,
@@ -68,19 +74,28 @@ def _compute_archel_stats(resqml_data: dict) -> dict:
         unit="archel value",
     ):
         archel_counts[i] = np.sum(archel == v)
+        archel_volumes[i] = np.sum(cell_volumes[archel == v])
 
     sum_of_counts = np.sum(archel_counts)
     assert sum_of_counts == archel.size
 
+    sum_of_volumes = np.sum(archel_volumes)
+    assert np.isclose(sum_of_volumes, total_volume)
+
+    counts = {int(v): f"{int(c)}" for v, c in zip(archel_values, archel_counts)}
     proportions = {
-        int(v): c / sum_of_counts for v, c in zip(archel_values, archel_counts)
+        int(v): f"{c / sum_of_counts:.2%}" for v, c in zip(archel_values, archel_counts)
     }
-    counts = {int(v): int(c) for v, c in zip(archel_values, archel_counts)}
+    volume_fractions = {
+        int(v): f"{vol / sum_of_volumes:.2%}"
+        for v, vol in zip(archel_values, archel_volumes)
+    }
 
     return {
         "model_name": resqml_data["model_name"],
-        "archel_proportions": proportions,
-        "archel_counts": counts,
+        "archel_cell_counts": counts,
+        "archel_cell_count_proportions": proportions,
+        "archel_volume_fractions": volume_fractions,
     }
 
 
@@ -91,3 +106,10 @@ def _dump_archel_stats(archel_stats: dict, outdir: pathlib.Path) -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     with open(fn_out, "w") as f:
         json.dump(archel_stats, f, indent=2)
+
+
+def _compute_cell_volumes(cpp: np.ndarray, dx: float, dy: float) -> np.ndarray:
+    dz = np.diff(cpp, axis=0)
+    dz = np.concatenate((dz, np.zeros_like(dz[0:1, :, :])), axis=0)
+    cell_volumes = dx * dy * dz
+    return cell_volumes
