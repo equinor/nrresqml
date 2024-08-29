@@ -2,15 +2,20 @@ import pathlib
 import pydap.client
 import webob.exc
 from pydap.model import DatasetType
-from typing import List, Union
+from typing import List, Union, Optional
 
 import h5py
 import numpy as np
 
+from nrresqml.derivatives import commonprops
 from nrresqml.derivatives.ijkgridcreator import IjkGridCreator, IjkGridCreationError
 from nrresqml.factories.energetics import create_hdf5_reference
 from nrresqml.factories.resqml.properties import create_continuous_property, create_categorical_property
 from nrresqml.structures.energetics import AbstractObject
+from nrresqml.structures.resqml.properties import (
+    ContinuousProperty,
+    AbstractValuesProperty,
+)
 
 
 class AdaptorError(Exception):
@@ -64,32 +69,6 @@ class Delft3DResQmlAdaptor(Hdf5ResQmlAdaptor):
     # Continuous attributes and their natural bounds. We can compute the bounds per data set, but it is not obvious from
     # the ResQML specification that it is required. Instead, we choose to use some natural bounds based on what the
     # properties represents. This can save a significant amount of computation time.
-    _cont_prop_bounds = {
-        'DXX01': (0.0, 50.0),
-        'DXX02': (0.0, 50.0),
-        'DXX03': (0.0, 50.0),
-        'DXX04': (0.0, 50.0),
-        'DXX05': (0.0, 50.0),
-        'd50_per_sedclass': (0.0, 50.0),
-        'diameter': (0.0, 50.0),
-        'fraction': (0.0, 1.0),
-        'sorting': (0.0, 1.0),
-        'Sed1_mass': (0.0, 1e6),
-        'Sed2_mass': (0.0, 1e6),
-        'Sed3_mass': (0.0, 1e6),
-        'Sed4_mass': (0.0, 1e6),
-        'Sed5_mass': (0.0, 1e6),
-        'Sed6_mass': (0.0, 1e6),
-        'Sed1_volfrac': (0.0, 1.0),
-        'Sed2_volfrac': (0.0, 1.0),
-        'Sed3_volfrac': (0.0, 1.0),
-        'Sed4_volfrac': (0.0, 1.0),
-        'Sed5_volfrac': (0.0, 1.0),
-        'Sed6_volfrac': (0.0, 1.0),
-        'Porosity': (0.0, 1.0),
-        'porosity': (0.0, 1.0),
-        'permeability': (0.0, 1.0),
-    }
 
     def __init__(self, d3_file: str, archel_file: str) -> None:
         self._d3_file = _open_delft3d_path(d3_file)
@@ -107,43 +86,40 @@ class Delft3DResQmlAdaptor(Hdf5ResQmlAdaptor):
 
         # Continuous properties
         self._continuous_properties = []
-        for pn in self._cont_prop_bounds:
+        for pn in commonprops.STANDARD_PROPS:
             try:
-                self._continuous_properties.append(self._d3_file[pn])
-                print(f'Included continuous property {pn}')
+                self._continuous_properties.append(self._d3_file[pn.name])
+                print(f'Included continuous property {pn.name}')
             except KeyError:
-                print(f'Did not find property {pn}')
+                print(f'Did not find property {pn.name}')
+        print('')
+
+        # Check if there is a vfractions property. If yes, then this is probably a newer format
+        self._volume_fractions = Delft3DResQmlAdaptor._try_find_vfractions_array(self._d3_file)
 
     def create_objects(self) -> List[AbstractObject]:
         ref = create_hdf5_reference()
         ijk = self._grid_creator.ijk_representation(ref)
         # Create continuous properties
-        props = []
-        for p in self._continuous_properties:
-            # Workaround to support both HDF5 and pydap when finding 'long_name':
-            try:
-                long_name = p.attrs['long_name']
-                # sometimes models returns bytes, so we need to decode it
-                if isinstance(long_name, bytes):
-                   long_name= long_name.decode('utf-8')
-            except AttributeError:
-                long_name = p.attributes['long_name']
-            pn = p.name.strip('/')
-            props.append(create_continuous_property(
-                long_name,
-                pn,
-                self._cont_prop_bounds[pn][0],
-                self._cont_prop_bounds[pn][1],
-                ijk,
-                ref
-            ))
+        props: List[AbstractValuesProperty] = [
+            Delft3DResQmlAdaptor._create_continuous_property(p, ijk, ref)
+            for p in self._continuous_properties
+        ]
+        if self._volume_fractions is not None:
+            props += [
+                Delft3DResQmlAdaptor._create_continuous_property(f'Sed{i}_volfrac', ijk, ref)
+                for i in range(1, self._volume_fractions.shape[1] + 1)
+            ]
+
         # Create categorical properties
         # Architectural elements
-        props.append(create_categorical_property('Architectural element', self._resqml_archel_key, ijk, ref,
-                                                 self._archel_map))
+        props.append(create_categorical_property(
+            'Architectural element', self._resqml_archel_key, ijk, ref, self._archel_map
+        ))
         # Sub-environment
-        props.append(create_categorical_property('Subenvironment', self._resqml_subenv_key, ijk, ref,
-                                                 self._subenviron_map))
+        props.append(create_categorical_property(
+            'Subenvironment', self._resqml_subenv_key, ijk, ref, self._subenviron_map
+        ))
 
         return [ijk, ijk.Geometry.LocalCrs, ref] + props
 
@@ -151,6 +127,22 @@ class Delft3DResQmlAdaptor(Hdf5ResQmlAdaptor):
         out = h5py.File(filename, 'w')
         for p in self._continuous_properties:
             out.copy(p, p.name)
+
+        if self._volume_fractions is not None:
+            print('Splitting vfractions array')
+            chunks = (
+                self._volume_fractions.chunks[0],
+                self._volume_fractions.chunks[2],
+                self._volume_fractions.chunks[3],
+            )
+            for i in range(self._volume_fractions.shape[1]):
+                out.create_dataset(
+                    f'Sed{i+1}_volfrac',
+                    data=self._volume_fractions[:, i, :, :],
+                    compression=self._volume_fractions.compression,
+                    compression_opts=self._volume_fractions.compression_opts,
+                    chunks=chunks,
+                )
 
         # Define temporary function to extract archel data
         def _copy_archel_data(source, target):
@@ -173,3 +165,54 @@ class Delft3DResQmlAdaptor(Hdf5ResQmlAdaptor):
 
     def h5_base_name(self) -> str:
         return 'Delft3d.h5'
+
+    @staticmethod
+    def _try_find_vfractions_array(
+        d3_file: Union[h5py.File, DatasetType]
+    ) -> Optional[h5py.Dataset]:
+        volfrac = d3_file.get('vfractions')
+        if volfrac is None:
+            return
+        if 'Sed1_volfrac' in d3_file:
+            print(
+                f'Both SedX_volfrac and vfractions are present. vfractions will be ignored'
+            )
+            return
+        if volfrac.ndim != 4:
+            print(
+                f'Wrong volume fractions array dimension: {volfrac.ndim} (expected'
+                f' 4). vfractions will be ignored'
+            )
+            return
+        if volfrac.shape[1] != 6:
+            print(
+                f'Wrong volume fractions array shape: {volfrac.shape}. Second'
+                f' dimension should have length 6. vfractions will be ignored'
+            )
+            return
+        return volfrac
+
+    @staticmethod
+    def _create_continuous_property(prop, ijk, ref) -> ContinuousProperty:
+        if isinstance(prop, str):
+            pn = prop
+            long_name = prop
+        else:
+            # Workaround to support both HDF5 and pydap when finding 'long_name':
+            try:
+                long_name = prop.attrs['long_name']
+                # sometimes models returns bytes, so we need to decode it
+                if isinstance(long_name, bytes):
+                    long_name = long_name.decode('utf-8')
+            except AttributeError:
+                long_name = prop.attributes['long_name']
+            pn = prop.name.strip('/')
+        return create_continuous_property(
+            long_name,
+            pn,
+            commonprops.lookup_common_prop(pn).lower,
+            commonprops.lookup_common_prop(pn).upper,
+            ijk,
+            ref,
+        )
+
