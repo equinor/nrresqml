@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.1.0](https://github.com/equinor/nrresqml/compare/v1.0.5...v1.1.0) (2024-09-02)
+
+
+### Features
+
+* support new Delft3D format ([d61cb08](https://github.com/equinor/nrresqml/commit/d61cb08ce458ccea6fbb8ab18648a549491273d8))
+* support new Delft3D format ([fb6bba8](https://github.com/equinor/nrresqml/commit/fb6bba8c6ddef313baa1145967cbe872ef7a0823))
+
 ## [1.0.5](https://github.com/equinor/nrresqml/compare/v1.0.4...v1.0.5) (2024-06-04)
 
 
