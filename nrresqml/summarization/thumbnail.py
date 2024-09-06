@@ -1,67 +1,74 @@
 import pathlib
+from typing import Dict
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+from nrresqml.summarization.resqmldata import ResQmlData
+
+ColorLegend = Dict[str, str]  # Archel id (as str) --> css color
+
 
 def make_thumbnail_image(
-    archel_data: dict, outdir: pathlib.Path, background_archels: list[int] = [0, 6]
-) -> None:
-    archel = archel_data["archel"]
-    x0 = archel_data["x0"]
-    y0 = archel_data["y0"]
-    dx = archel_data["dx"]
-    dy = archel_data["dy"]
-    nx = archel_data["nx"]
-    ny = archel_data["ny"]
+    resqml_data: ResQmlData, outdir: pathlib.Path, background_archels: list[int] = [0, 6]
+) -> ColorLegend:
+    archel = resqml_data.archel
+    x0 = resqml_data.x0
+    y0 = resqml_data.y0
+    dx = resqml_data.dx
+    dy = resqml_data.dy
+    nx = resqml_data.nx
+    ny = resqml_data.ny
 
     view_box = _find_cropbox(
-        archel_data, background_archels, fraction=0.95, tolerance=0.01
+        resqml_data, background_archels, fraction=0.95, tolerance=0.01
     )
 
     print("Creating thumbnail image...")
-    fig = plt.figure(figsize=(1.5, 1.5))
-    ax = fig.add_axes([0, 0, 1, 1])
+    fig = plt.figure(figsize=(6, 6))
+    ax = fig.add_axes([0.1, 0, 0.8, 1])
+    archel_array = np.where(
+        _is_foreground(archel[-1, :, :], background_archels),
+        archel[-1, :, :],
+        np.nan
+    )
     ax.imshow(
-        np.where(
-            _is_foreground(archel[-1, :, :], background_archels),
-            archel[-1, :, :],
-            np.nan,
-        ),
+        archel_array,
         extent=(y0, y0 + dy * ny, x0, x0 + dx * nx),
         interpolation="none",
         origin="lower",
         cmap="tab10",
     )
+    legend = _extract_color_legend(archel_array, "tab10")
 
-    ax.set_xticks([])
-    ax.set_yticks([])
     ax.set_frame_on(False)
 
     x_min, x_max, y_min, y_max = view_box.values()
     ax.set_xlim(y_min, y_max)
     ax.set_ylim(x_min, x_max)
+    ax.grid(linewidth=1, linestyle="dotted", color="k", zorder=30)
 
     ax.set_aspect("equal", adjustable="box")
 
-    model_name = archel_data["model_name"]
-    output_path = outdir / f"{model_name}.png"
+    output_path = outdir / f"{resqml_data.model_name}.png"
 
-    plt.savefig(output_path, dpi=300)
+    plt.savefig(output_path, dpi=600)
     print(f"Saved thumbnail image to {output_path}")
+    return legend
 
 
 def _is_foreground(array, background_values):
     return np.logical_and.reduce([array != bgv for bgv in background_values])
 
 
-def _find_cropbox_full(archel_data: dict, background_archels) -> dict:
-    archel = archel_data["archel"]
-    x0 = archel_data["x0"]
-    y0 = archel_data["y0"]
-    dx = archel_data["dx"]
-    dy = archel_data["dy"]
-    nx = archel_data["nx"]
-    ny = archel_data["ny"]
+def _find_cropbox_full(archel_data: ResQmlData, background_archels) -> dict:
+    archel = archel_data.archel
+    x0 = archel_data.x0
+    y0 = archel_data.y0
+    dx = archel_data.dx
+    dy = archel_data.dy
+    nx = archel_data.nx
+    ny = archel_data.ny
 
     xmesh, ymesh = np.meshgrid(
         np.linspace(x0, x0 + dx * nx, archel.shape[1]),
@@ -91,20 +98,20 @@ def _find_cropbox_full(archel_data: dict, background_archels) -> dict:
 
 
 def _find_cropbox(
-    archel_data: dict, background_archels, fraction=1.0, tolerance=0.1
+    resqml_data: ResQmlData, background_archels, fraction=1.0, tolerance=0.1
 ) -> dict:
     if fraction == 1.0:
-        return _find_cropbox_full(archel_data, background_archels)
+        return _find_cropbox_full(resqml_data, background_archels)
     elif fraction <= 0.0 or fraction > 1.0:
         raise ValueError("Fraction must be in the range (0, 1]")
     else:
-        archel = archel_data["archel"]
-        x0 = archel_data["x0"]
-        y0 = archel_data["y0"]
-        dx = archel_data["dx"]
-        dy = archel_data["dy"]
-        nx = archel_data["nx"]
-        ny = archel_data["ny"]
+        archel = resqml_data.archel
+        x0 = resqml_data.x0
+        y0 = resqml_data.y0
+        dx = resqml_data.dx
+        dy = resqml_data.dy
+        nx = resqml_data.nx
+        ny = resqml_data.ny
         x1 = x0 + dx * nx
         y1 = y0 + dy * ny
 
@@ -203,3 +210,12 @@ def _fraction_inside_box(
     )
     n_total = np.sum(np.isfinite(x_foreground))
     return n_inside / n_total
+
+
+def _extract_color_legend(archel_array: np.ndarray, color_map_name: str) -> ColorLegend:
+    clts = plt.colormaps[color_map_name].colors
+    archels = np.unique(archel_array[~np.isnan(archel_array)]).astype(int)
+    return {
+        str(a): f"rgb{tuple((255 * np.array(c)).astype(np.uint8))}"
+        for a, c in zip(archels, clts)
+    }
