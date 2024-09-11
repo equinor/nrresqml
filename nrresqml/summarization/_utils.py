@@ -1,4 +1,5 @@
 import dataclasses
+from typing import TypedDict
 
 import numpy as np
 
@@ -15,3 +16,10 @@ class ResQmlData:
     archel: np.ndarray
     cell_volumes: np.ndarray
     model_name: str
+
+
+class BBox(TypedDict):
+    x_min: float
+    x_max: float
+    y_min: float
+    y_max: float
