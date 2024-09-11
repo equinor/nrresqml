@@ -4,15 +4,16 @@ import pathlib
 import tqdm
 import json
 
-from nrresqml.summarization.resqmldata import ResQmlData
+from nrresqml.summarization._utils import ResQmlData
 from nrresqml.summarization.thumbnail import make_thumbnail_image
 
 
 def summarize_resqml(fn: pathlib.Path, outdir: pathlib.Path) -> None:
     resqml_data = _read_resqml(fn)
     archel_stats = _compute_archel_stats(resqml_data)
-    legend = make_thumbnail_image(resqml_data, outdir)
+    legend, bbox = make_thumbnail_image(resqml_data, outdir)
     archel_stats["thumbnail_legend"] = legend
+    archel_stats["thumbnail_bbox"] = bbox
     _dump_model_description(archel_stats, outdir)
 
 
@@ -88,7 +89,7 @@ def _compute_archel_stats(resqml_data: ResQmlData) -> dict:
         "archel_cell_counts": counts,
         "archel_cell_count_proportions": proportions,
         "archel_volume_fractions": volume_fractions,
-        "boundingbox": {
+        "model_boundingbox": {
             "x0": resqml_data.x0,
             "x1": resqml_data.x0 + resqml_data.dx * resqml_data.nx,
             "y0": resqml_data.y0,
