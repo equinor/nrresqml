@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nrresqml"
-version = "1.0.4"
+version = "1.1.0"
 description = "Package for converting Delft3D output to ResQml"
 authors = ["Norwegian Computing Center"]
 license = "GPLv3"
@@ -12,7 +12,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 numpy = "^1.26"
 h5py = "^3.11.0"
 lxml = "~4.9.2"
