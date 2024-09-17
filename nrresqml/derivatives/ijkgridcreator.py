@@ -46,20 +46,30 @@ def _extract_grid_parameters(_d3_file: h5py.File) -> _GridParameters:
     if not {"DPS", "zcor"}.intersection(_keys):
         raise IjkGridCreationError('Missing at least parameter "DPS" or "zcor"')
     # Extract parameters
-    xcor = _d3_file["xcor"] if "xcor" in _keys else _d3_file["XCOR"]
-    ycor = _d3_file["ycor"] if "ycor" in _keys else _d3_file["YCOR"]
-    zcor = _d3_file["zcor"] if "zcor" in _keys else _d3_file["DPS"]
+    xcor = np.array(_d3_file["xcor"] if "xcor" in _keys else _d3_file["XCOR"])
+    ycor = np.array(_d3_file["ycor"] if "ycor" in _keys else _d3_file["YCOR"])
+    zcor = np.array(_d3_file["zcor"] if "zcor" in _keys else _d3_file["DPS"])
+
+    # xcor/ycor may sometimes use -999.999 as a nan value
+    nanval = -999.999
+    xcor[xcor == nanval] = np.nan
+    ycor[ycor == nanval] = np.nan
+    x_min = np.nanmin(xcor)
+    x_max = np.nanmax(xcor)
+    y_min = np.nanmin(ycor)
+    y_max = np.nanmax(ycor)
+
     nk, ni, nj = zcor.shape
-    dx = (np.max(xcor) - np.min(xcor)) / (ni - 1)
-    dy = (np.max(ycor) - np.min(ycor)) / (nj - 1)
-    zz = np.array(zcor)
+    dx = (x_max - x_min) / (ni - 1)
+    dy = (y_max - y_min) / (nj - 1)
     if "zcor" in _d3_file:
         # zcor increases upwards, mono_elevation expects downwards-increasing depth
-        zz = IjkGridCreator.mono_elevation(-zz)
-    if "zcor" not in _d3_file:
+        zcor_mono = IjkGridCreator.mono_elevation(-zcor)
+    else:
         # DPS is depth
-        zz = IjkGridCreator.mono_elevation(zz)
-    return _GridParameters(ni, nj, nk, dx, dy, zz, xcor[0, 0], ycor[0, 0])
+        zcor_mono = IjkGridCreator.mono_elevation(zcor)
+
+    return _GridParameters(ni, nj, nk, dx, dy, zcor_mono, x_min, y_min)
 
 
 def _hdf5_array(h5_epc_ref: EpcExternalPartReference, h5_path: str):
