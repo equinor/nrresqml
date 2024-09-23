@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/equinor/nrresqml/compare/v1.1.0...v1.2.0) (2024-09-23)
+
+
+### Features
+
+* Generate thumbnail image and summary statistics from resqml data ([f04cf4d](https://github.com/equinor/nrresqml/commit/f04cf4d2ec11c241ec02a84453ff7851f094395c))
+* Generate thumbnail image and summary statistics from resqml data ([e77a58b](https://github.com/equinor/nrresqml/commit/e77a58b62490b0fdbc9e2b4ee8bf57a17d3b3bf0))
+* Generate thumbnail image and summary statistics from resqml data ([eb4f7fa](https://github.com/equinor/nrresqml/commit/eb4f7fa9663e3ee0cbd0d4a7b886b219d248eebf))
+* Generate thumbnail image and summary statistics from resqml data ([c7aefe1](https://github.com/equinor/nrresqml/commit/c7aefe1fa79900f74d5bc85e334685036faff808))
+* Generate thumbnail image and summary statistics from resqml data ([cee159d](https://github.com/equinor/nrresqml/commit/cee159d1b82b65c89d75f0b9281df7b18a09fee5))
+* Generate thumbnail image and summary statistics from resqml data ([cdeb193](https://github.com/equinor/nrresqml/commit/cdeb1937954a9381c8fe0757dcaf23194f1e9639))
+* Generate thumbnail image and summary statistics from resqml data ([9936064](https://github.com/equinor/nrresqml/commit/99360644749387f3c3036d29ab19485f44faa5d5))
+* Generate thumbnail image and summary statistics from resqml data ([c52e192](https://github.com/equinor/nrresqml/commit/c52e1924b094d09e42fb3150ac58fea4a9719c89))
+* Generate thumbnail image and summary statistics from resqml data ([bad3eb5](https://github.com/equinor/nrresqml/commit/bad3eb58fa2a6bd66bd8a3e5f283ce88958ce517))
+* Generate thumbnail image and summary statistics from resqml data ([b4096f9](https://github.com/equinor/nrresqml/commit/b4096f9e80c98232ad368c71dae29e1c24634d03))
+
 ## [1.1.0](https://github.com/equinor/nrresqml/compare/v1.0.5...v1.1.0) (2024-09-02)
 
 
