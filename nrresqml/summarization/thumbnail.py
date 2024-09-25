@@ -21,8 +21,12 @@ def make_thumbnail_image(
     nx = resqml_data.nx
     ny = resqml_data.ny
 
+    # view_box = _find_cropbox(
+    #     resqml_data, background_archels, fraction=0.95, tolerance=0.01
+    # )
+
     view_box = _find_cropbox(
-        resqml_data, background_archels, fraction=0.95, tolerance=0.01
+        resqml_data, background_archels, fraction=0.99999, tolerance=0.01
     )
 
     print("Creating thumbnail image...")
