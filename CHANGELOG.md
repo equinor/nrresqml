@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/equinor/nrresqml/compare/v1.2.0...v1.2.1) (2024-09-25)
+
+
+### Bug Fixes
+
+* **thumbnail generation:** increased fraction to fix issue with models other than Sobrarbe and Roda ([c5747ba](https://github.com/equinor/nrresqml/commit/c5747baff3e3de046cdaf603f6a23e2a8410710b))
+
 ## [1.2.0](https://github.com/equinor/nrresqml/compare/v1.1.0...v1.2.0) (2024-09-23)
 
 
