@@ -55,33 +55,28 @@ def _read_resqml(fn: pathlib.Path) -> ResQmlData:
 
 def _compute_archel_stats(resqml_data: ResQmlData) -> dict:
     archel = resqml_data.archel
-    archel_values = np.unique(archel)
-    archel_counts = np.zeros_like(archel_values)
+    unq_archel, unq_inverse, unq_count = np.unique(np.array(archel).flat, return_inverse=True, return_counts=True)
     cell_volumes = resqml_data.cell_volumes
-    total_volume = np.sum(cell_volumes)
-    archel_volumes = np.zeros_like(archel_values)
-    for i, v in tqdm.tqdm(
-        enumerate(archel_values),
-        total=archel_values.size,
-        desc="Calculating archel statistics",
-        unit="archel value",
-    ):
-        archel_counts[i] = np.sum(archel == v)
-        archel_volumes[i] = np.sum(cell_volumes[archel == v])
-
-    sum_of_counts = np.sum(archel_counts)
-    assert sum_of_counts == archel.size
+    archel_volumes = [
+        np.sum(np.array(cell_volumes).flat[unq_inverse == i])
+        for i in tqdm.tqdm(
+            range(unq_archel.size),
+            total=unq_archel.size,
+            desc="Calculating archel statistics",
+            unit="archel value",
+        )
+    ]
 
     sum_of_volumes = np.sum(archel_volumes)
-    assert np.isclose(sum_of_volumes, total_volume)
+    assert np.isclose(sum_of_volumes, np.sum(cell_volumes))
 
-    counts = {int(v): f"{int(c)}" for v, c in zip(archel_values, archel_counts)}
+    counts = {int(v): f"{int(c)}" for v, c in zip(unq_archel, unq_count)}
     proportions = {
-        int(v): f"{c / sum_of_counts:.2%}" for v, c in zip(archel_values, archel_counts)
+        int(v): f"{c / archel.size:.2%}" for v, c in zip(unq_archel, unq_count)
     }
     volume_fractions = {
         int(v): f"{vol / sum_of_volumes:.2%}"
-        for v, vol in zip(archel_values, archel_volumes)
+        for v, vol in zip(unq_archel, archel_volumes)
     }
 
     return {

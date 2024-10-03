@@ -13,6 +13,7 @@ ColorLegend = Dict[str, str]  # Archel id (as str) --> css color
 def make_thumbnail_image(
     resqml_data: ResQmlData, outdir: pathlib.Path, background_archels: list[int] = [0, 6]
 ) -> Tuple[ColorLegend, BBox]:
+    outdir.mkdir(exist_ok=True, parents=True)
     archel = resqml_data.archel
     x0 = resqml_data.x0
     y0 = resqml_data.y0
