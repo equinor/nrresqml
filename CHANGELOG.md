@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2](https://github.com/equinor/nrresqml/compare/v1.2.1...v1.2.2) (2024-10-03)
+
+
+### Bug Fixes
+
+* Fix issue with wrong archel count ([ca78d67](https://github.com/equinor/nrresqml/commit/ca78d677e6f904b87034e492fb691ee2dcf3c797))
+
 ## [1.2.1](https://github.com/equinor/nrresqml/compare/v1.2.0...v1.2.1) (2024-09-25)
 
 
