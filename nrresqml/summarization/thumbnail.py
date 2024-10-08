@@ -39,7 +39,7 @@ def make_thumbnail_image(
         np.nan
     )
     ax.imshow(
-        archel_array,
+        archel_array.T,
         extent=(y0, y0 + dy * ny, x0, x0 + dx * nx),
         interpolation="none",
         origin="lower",
@@ -48,8 +48,8 @@ def make_thumbnail_image(
     legend = _extract_color_legend(archel_array, "tab10")
 
     x_min, x_max, y_min, y_max = view_box.values()
-    ax.set_xlim(y_min, y_max)
-    ax.set_ylim(x_min, x_max)
+    ax.set_xlim(x_min, x_max)
+    ax.set_ylim(y_min, y_max)
     ax.set_xticks([])
     ax.set_yticks([])
 
