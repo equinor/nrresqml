@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.patches as mpatches
 
 from nrresqml.summarization._utils import ResQmlData
 from nrresqml.summarization._utils import BBox
@@ -38,14 +39,18 @@ def make_thumbnail_image(
         archel[-1, :, :],
         np.nan
     )
-    ax.imshow(
+    img = ax.imshow(
         archel_array.T,
         extent=(x0, x0 + dx * nx, y0, y0 + dy * ny),
         interpolation="none",
         origin="lower",
         cmap="tab10",
     )
-    legend = _extract_color_legend(archel_array, "tab10")
+    colours = img.cmap(img.norm(np.unique(archel_array.T)))
+    patches = [ mpatches.Patch(color=colours[i], label="{l}".format(l=np.unique(archel_array[~np.isnan(archel_array)]).astype(int)[i]) ) for i in range(len(np.unique(archel_array[~np.isnan(archel_array)]))) ]
+    # legend = _extract_color_legend(archel_array, "tab10")
+    legend = _extract_color_legend_from_patches(archel_array, patches)
+
 
     x_min, x_max, y_min, y_max = view_box.values()
     ax.set_xlim(x_min, x_max)
@@ -226,4 +231,12 @@ def _extract_color_legend(archel_array: np.ndarray, color_map_name: str) -> Colo
     return {
         str(a): f"rgb{tuple((255 * np.array(c)).astype(np.uint8))}"
         for a, c in zip(archels, clts)
+    }
+
+def _extract_color_legend_from_patches(archel_array: np.ndarray, color_patches: list[mpatches.Patch]) -> ColorLegend:
+    archels = np.unique(archel_array[~np.isnan(archel_array)]).astype(int)
+
+    return {
+        str(a): f"rgb{tuple((255 * np.array(p.get_facecolor())[:-1]).astype(np.uint8))}"
+        for a,p in zip(archels, color_patches)
     }
