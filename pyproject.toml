@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nrresqml"
-version = "1.2.2"
+version = "1.2.3"
 description = "Package for converting Delft3D output to ResQml"
 authors = ["Norwegian Computing Center"]
 license = "GPLv3"
