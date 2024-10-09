@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/equinor/nrresqml/compare/v1.2.2...v1.2.3) (2024-10-09)
+
+
+### Bug Fixes
+
+* Fix issue with thumbnail orientation ([#18](https://github.com/equinor/nrresqml/issues/18)) ([929e366](https://github.com/equinor/nrresqml/commit/929e366f450ccbb98c979c27faf1095196df8eb4))
+
 ## [1.2.2](https://github.com/equinor/nrresqml/compare/v1.2.1...v1.2.2) (2024-10-03)
 
 
