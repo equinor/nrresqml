@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/equinor/nrresqml/compare/v1.2.3...v1.2.4) (2024-10-09)
+
+
+### Bug Fixes
+
+* fixed image extent to have correct axis ([198e0be](https://github.com/equinor/nrresqml/commit/198e0be18f066757a6a5350364bf52329fbe1c64))
+
 ## [1.2.3](https://github.com/equinor/nrresqml/compare/v1.2.2...v1.2.3) (2024-10-09)
 
 
