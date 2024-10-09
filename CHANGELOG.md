@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.5](https://github.com/equinor/nrresqml/compare/v1.2.4...v1.2.5) (2024-10-09)
+
+
+### Bug Fixes
+
+* updated colour legend generation to map colors propertly ([b20c971](https://github.com/equinor/nrresqml/commit/b20c971d3d191204718e23e841e8e648b053ef9c))
+
 ## [1.2.4](https://github.com/equinor/nrresqml/compare/v1.2.3...v1.2.4) (2024-10-09)
 
 
