@@ -40,7 +40,7 @@ def make_thumbnail_image(
     )
     ax.imshow(
         archel_array.T,
-        extent=(y0, y0 + dy * ny, x0, x0 + dx * nx),
+        extent=(x0, x0 + dx * nx, y0, y0 + dy * ny),
         interpolation="none",
         origin="lower",
         cmap="tab10",
