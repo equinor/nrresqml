@@ -16,7 +16,7 @@ A few general guidelines:
 
 ## Report a bug
 
-Please open an issue where you describe the bug and steps to reproduce. However, do NOT create an issue for security vulnerabilities, see [SECURITY.md](https://github.com/equinor/pepm-ui/blob/main/SECURITY.md) for security reporting.
+Please open an issue where you describe the bug and steps to reproduce. However, do NOT create an issue for security vulnerabilities, see [SECURITY.md](https://github.com/equinor/nrresqml/blob/main/SECURITY.md) for security reporting.
 
 ## How to suggest a feature or enhancement
 
