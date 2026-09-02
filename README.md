@@ -1,3 +1,4 @@
+[![SCM Compliance](https://scm-compliance-api.radix.equinor.com/repos/equinor/9a179150-51f0-4b1e-8036-9c5b8fc9888f/badge)](https://scm-compliance-api.radix.equinor.com/repos/equinor/9a179150-51f0-4b1e-8036-9c5b8fc9888f/badge)
 # NR ResQml
 
 
